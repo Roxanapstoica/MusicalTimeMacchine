@@ -16,9 +16,13 @@ import requests
 import os
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
+import pprint
+from datetime import datetime
 
 URL = "https://www.billboard.com/charts/hot-100/"
 date = input("Which year would you like to travel to? (Type the data in this format: YYYY-MM-DD) ")
+year = date.split("-")[0]
+print(year)
 CLIENT_ID = os.environ["SPOTIPY_CLIENT_ID"]
 CLIENT_SECRET = os.environ["SPOTIPY_CLIENT_SECRET"]
 URI = os.environ["SPOTIPY_REDIRECT_URI"]
@@ -34,11 +38,11 @@ songs_titles_list = [t.getText().replace('\n',' ') for t in songs_titles] ###.re
 index = 1
 file_name = f"Music_Top_100_{date}.txt"
 with open(file_name, "w", encoding="utf-8") as music_file:
-    music_file.write("Position || Song title || Artist\n")
+    # music_file.write("Position || Song title || Artist\n")
     for i in range(0,len(songs_titles_list)):
         if i%2 == 0:
             song_title_artist = songs_titles_list[i].split('\t')
-            music_file.write(f"{index}. {song_title_artist[9]}, {song_title_artist[14]}\n")
+            music_file.write(f"{song_title_artist[9]} | {song_title_artist[14]}\n")
             index +=1
 
 ### solutie Angela:
@@ -58,10 +62,54 @@ sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
     username="b6m4wncptmodxgivjkixv35x5"
 ))
 
-user_id = sp.current_user()["id"]
 
 ####Using the Spotipy documentation, create a list of Spotify song URIs for the list of song names
 # you found from step 1 (scraping billboard 100).
-sp.user_playlist_create(user_id, "Playlist1", public=False)
+###Spotify URI - The resource identifier that you can enter, for example, in the
+# Spotify Desktop client’s search box to locate an artist, album,
+# or track. Example: spotify:track:6rqhFgbbKwnb9MLmUQDhG6
 
+user_id = sp.current_user()["id"]
 
+song_uris = []
+tracks = []
+
+pp = pprint.PrettyPrinter(indent=4)
+with open(file_name,"r") as songs:
+    track = songs.readlines()
+    # new_playlist = sp.playlist_add_items(playlistid,songs)
+
+for t in track:
+    stripped_track = t.strip().split('|')
+    track_uri = stripped_track[0]
+    tracks.append(track_uri)
+# track_uri = list(track_uri)
+print(tracks)
+print("********************************************************")
+print("********************************************************")
+for song in tracks:
+    print(song)
+    result = sp.search(q=f'track:{song} year:{year}', type='track')
+    print(result)
+    try:
+        uri = result["tracks"]["items"][0]["uri"]
+        song_uris.append(uri)
+    except IndexError:
+        pp.pprint(f"Song {song} doesn't exist in Spotify library. Skipped.")
+
+print(song_uris)
+
+#### Using the Spotipy documentation, create a new private playlist with the name "YYYY-MM-DD Billboard 100",
+# where the date is the date you inputted in step 1.
+# HINT: You'll need the user id you got from Step 2.
+# 2. Add each of the songs found in Step 3 to the new playlist.
+# HINT: You'll need the playlist id which is returned as an output once you've successfully
+# created a new playlist.
+
+new_playlist = sp.user_playlist_create(user_id, f"{date} Billboard 100", public=False)
+playlistid = new_playlist["id"]
+print(playlistid)
+sp.playlist_add_items(playlistid, song_uris)
+
+# for su in song_uris:
+#     sp.playlist_add_items(playlistid,su)
