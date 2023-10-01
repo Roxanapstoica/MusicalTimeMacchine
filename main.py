@@ -77,13 +77,12 @@ tracks = []
 pp = pprint.PrettyPrinter(indent=4)
 with open(file_name,"r") as songs:
     track = songs.readlines()
-    # new_playlist = sp.playlist_add_items(playlistid,songs)
 
 for t in track:
     stripped_track = t.strip().split('|')
     track_uri = stripped_track[0]
     tracks.append(track_uri)
-# track_uri = list(track_uri)
+
 print(tracks)
 print("********************************************************")
 print("********************************************************")
@@ -110,6 +109,3 @@ new_playlist = sp.user_playlist_create(user_id, f"{date} Billboard 100", public=
 playlistid = new_playlist["id"]
 print(playlistid)
 sp.playlist_add_items(playlistid, song_uris)
-
-# for su in song_uris:
-#     sp.playlist_add_items(playlistid,su)
